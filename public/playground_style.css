@@ -872,14 +872,14 @@ a {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  height: 100vh;
+  height: 100dvh;
   font-family: var(--font-sans);
 }
 
 .player-wrapper {
   position: relative;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   background: #000;
   display: flex;
   justify-content: center;

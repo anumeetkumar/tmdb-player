@@ -934,7 +934,7 @@ function setupEventListeners() {
 
   // Desktop: clicking wrapper/video/overlay toggles play
   // Mobile: single tap shows/hides controls; double-tap seeks (handled in touchstart below)
-  const isTouchDevice = () => window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  const isTouchDevice = () => ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
   playerWrapper.addEventListener('click', (e) => {
     if (isTouchDevice()) return; // handled by touch events below
