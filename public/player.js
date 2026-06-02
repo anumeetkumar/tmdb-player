@@ -614,18 +614,49 @@ function toggleMute() {
   }
 }
 
-// Fullscreen Management
+// Fullscreen Management — cross-browser + iOS + Android orientation lock
 function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    playerWrapper.requestFullscreen().catch(err => {
-      console.error(`Error going fullscreen: ${err.message}`);
-    });
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement);
+
+  if (!isFs) {
+    // Request fullscreen with all vendor prefixes
+    const el = playerWrapper;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+    if (req) {
+      req.call(el).then(() => {
+        // Lock to landscape for video content
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      }).catch(err => {
+        console.warn('[Player] Fullscreen request failed:', err.message);
+      });
+    }
     fullscreenIcon.innerHTML = `<path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"></path>`;
   } else {
-    document.exitFullscreen();
+    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+    if (exit) exit.call(document);
+    // Release orientation lock
+    if (screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
+    }
     fullscreenIcon.innerHTML = `<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>`;
   }
 }
+
+// Sync fullscreen icon when changed externally (e.g. Esc key)
+document.addEventListener('fullscreenchange', () => {
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  fullscreenIcon.innerHTML = isFs
+    ? `<path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"></path>`
+    : `<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>`;
+});
+document.addEventListener('webkitfullscreenchange', () => {
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  fullscreenIcon.innerHTML = isFs
+    ? `<path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"></path>`
+    : `<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>`;
+});
 
 // Menus opening & closing
 function closeAllMenus() {
@@ -819,10 +850,10 @@ function updateSeekbar() {
 
 function handleSeek(e) {
   const rect = seekbarContainer.getBoundingClientRect();
-  const clickX = e.clientX - rect.left;
-  const width = rect.width;
-  const seekTo = (clickX / width) * video.duration;
-  video.currentTime = seekTo;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
+  const seekTo = (clickX / rect.width) * (video.duration || 0);
+  if (!isNaN(seekTo)) video.currentTime = seekTo;
 }
 
 // Skip Intro logic trigger
@@ -898,15 +929,23 @@ function updateOverlayState() {
 // Event Listeners setup
 function setupEventListeners() {
   
-  // Play toggling
+  // Play toggling via dedicated button (always safe)
   playBtn.addEventListener('click', togglePlay);
-  
-  // Wrapper/Video canvas click coordination
+
+  // Desktop: clicking wrapper/video/overlay toggles play
+  // Mobile: single tap shows/hides controls; double-tap seeks (handled in touchstart below)
+  const isTouchDevice = () => window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
   playerWrapper.addEventListener('click', (e) => {
-    // Only toggle if clicked on wrapper itself, video element, or playPauseOverlay
+    if (isTouchDevice()) return; // handled by touch events below
     if (e.target === playerWrapper || e.target === video || e.target === playPauseOverlay || e.target === overlayIcon || overlayIcon.contains(e.target)) {
       togglePlay();
     }
+  });
+
+  // Desktop: mouse move shows controls
+  playerWrapper.addEventListener('mousemove', () => {
+    resetControlsTimer();
   });
   
   // Media status
@@ -966,8 +1005,16 @@ function setupEventListeners() {
     checkAutoPlayEnd();
   });
 
-  // Timeline Interactions
+  // Timeline Interactions — click (desktop) + touch (mobile)
   seekbarContainer.addEventListener('click', handleSeek);
+  seekbarContainer.addEventListener('touchstart', (e) => { e.stopPropagation(); handleSeek(e); }, { passive: true });
+  let seekDragging = false;
+  seekbarContainer.addEventListener('touchmove', (e) => {
+    e.stopPropagation();
+    handleSeek(e);
+    seekDragging = true;
+  }, { passive: true });
+  seekbarContainer.addEventListener('touchend', () => { seekDragging = false; });
   
   // Volume interactions
   muteBtn.addEventListener('click', toggleMute);
@@ -1089,30 +1136,56 @@ function setupEventListeners() {
     }
   });
 
-  // Double-tap Seek Gesture Detection
+  // ── Mobile Touch Handler ──────────────────────────────────────────────────
+  // Single tap → show/hide controls (NOT play/pause, to avoid accidental pausing)
+  // Double tap → seek ±10s
+  // Controls auto-hide after 3 s of no interaction
   let lastTapTime = 0;
+  let tapTimer = null;
+
   playerWrapper.addEventListener('touchstart', (e) => {
-    const currentTime = new Date().getTime();
-    const tapLength = currentTime - lastTapTime;
-    if (tapLength < 300 && tapLength > 0) {
-      // Double tap detected
+    // Ignore touches that originate from controls themselves
+    const target = e.target;
+    const isControl = customControls.contains(target) || skipIntroBtn.contains(target);
+    if (isControl) return;
+
+    const now = Date.now();
+    const gap = now - lastTapTime;
+    lastTapTime = now;
+
+    if (gap < 300 && gap > 30) {
+      // ── Double tap: seek ───────────────────────────────────────────────────
+      clearTimeout(tapTimer);
       const touchX = e.touches[0].clientX;
       const rect = playerWrapper.getBoundingClientRect();
-      const relativeX = touchX - rect.left;
-      
-      if (relativeX < rect.width / 2) {
-        // Double tap left
+      const relX = touchX - rect.left;
+
+      if (relX < rect.width / 3) {
         video.currentTime = Math.max(0, video.currentTime - 10);
         triggerOverlayPulse('rewind');
-      } else {
-        // Double tap right
+      } else if (relX > (rect.width * 2) / 3) {
         video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
         triggerOverlayPulse('forward');
+      } else {
+        // Double tap center = play/pause
+        togglePlay();
       }
       e.preventDefault();
+    } else {
+      // ── Single tap: toggle controls visibility ─────────────────────────────
+      tapTimer = setTimeout(() => {
+        const controlsVisible = playerWrapper.classList.contains('show-controls');
+        if (controlsVisible && !video.paused) {
+          // Controls already visible → hide them
+          playerWrapper.classList.remove('show-controls');
+          document.body.style.cursor = 'none';
+        } else {
+          // Show controls (and reset auto-hide timer)
+          resetControlsTimer();
+        }
+      }, 220);
     }
-    lastTapTime = currentTime;
-  });
+  }, { passive: false });
 }
 
 // Message listener from Parent for embedded commands

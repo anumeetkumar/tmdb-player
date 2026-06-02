@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>VidNest Embed Player</title>
   <link rel="stylesheet" href="playground_style.css">
   <!-- Load HLS.js for HLS streaming support -->
@@ -49,7 +49,7 @@
 
   <div class="player-wrapper" id="playerWrapper">
     <!-- Main HTML5 Video Element -->
-    <video id="mainVideo" playsinline crossorigin="anonymous" poster="https://image.tmdb.org/t/p/w1280/nMl7h2ZYE2nMfQWLgsh09Zaqarj.jpg">
+    <video id="mainVideo" playsinline webkit-playsinline x5-playsinline crossorigin="anonymous" poster="https://image.tmdb.org/t/p/w1280/nMl7h2ZYE2nMfQWLgsh09Zaqarj.jpg">
       <!-- Tracks will be dynamically injected by JavaScript -->
     </video>
 
