@@ -945,6 +945,7 @@ function setupEventListeners() {
 
   // Desktop: mouse move shows controls
   playerWrapper.addEventListener('mousemove', () => {
+    if (isTouchDevice()) return; // Prevent touch-emulated mousemove from interfering with tap
     resetControlsTimer();
   });
   
@@ -1175,7 +1176,7 @@ function setupEventListeners() {
       // ── Single tap: toggle controls visibility ─────────────────────────────
       tapTimer = setTimeout(() => {
         const controlsVisible = playerWrapper.classList.contains('show-controls');
-        if (controlsVisible && !video.paused) {
+        if (controlsVisible) {
           // Controls already visible → hide them
           playerWrapper.classList.remove('show-controls');
           document.body.style.cursor = 'none';
