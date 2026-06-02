@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VidNest · Direct Play Link Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0c0d10;
+      --surface:   #13151b;
+      --border:    #1e2230;
+      --accent:    #6c63ff;
+      --accent2:   #00c4ff;
+      --text:      #e4e6f0;
+      --muted:     #5a5f78;
+      --success:   #22d58a;
+      --error:     #ff4f6a;
+      --radius:    14px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* Ambient glow blobs */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(108,99,255,.18) 0%, transparent 70%);
+      top: -100px; left: -100px;
+    }
+    body::after {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(0,196,255,.12) 0%, transparent 70%);
+      bottom: -80px; right: -60px;
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 640px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.6);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon svg { width: 18px; height: 18px; fill: #fff; }
+    .logo-text { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+    .logo-text span { color: var(--accent2); }
+
+    h1 {
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    .field { margin-bottom: 18px; }
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-wrap svg {
+      position: absolute;
+      left: 14px;
+      width: 16px; height: 16px;
+      stroke: var(--muted);
+      flex-shrink: 0;
+    }
+
+    input[type="url"], input[type="text"] {
+      width: 100%;
+      padding: 12px 14px 12px 40px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    input[type="url"]:focus, input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108,99,255,.15);
+    }
+    input::placeholder { color: var(--muted); }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .btn-generate {
+      width: 100%;
+      margin-top: 8px;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-generate:hover { opacity: .88; }
+    .btn-generate:active { transform: scale(.98); }
+    .btn-generate svg { width: 18px; height: 18px; fill: #fff; }
+
+    /* Result box */
+    .result-box {
+      margin-top: 24px;
+      display: none;
+      animation: fadeUp .25s ease-out;
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(8px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    .result-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 10px;
+    }
+
+    .result-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.8rem;
+      color: var(--accent2);
+      word-break: break-all;
+      line-height: 1.5;
+    }
+    .result-link a {
+      flex: 1;
+      color: inherit;
+      text-decoration: none;
+    }
+    .result-link a:hover { text-decoration: underline; }
+
+    .btn-copy {
+      flex-shrink: 0;
+      padding: 7px 14px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+      white-space: nowrap;
+    }
+    .btn-copy:hover { background: var(--accent); color: #fff; }
+    .btn-copy.copied { background: var(--success); border-color: var(--success); color: #fff; }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .btn-open, .btn-embed {
+      flex: 1;
+      padding: 10px;
+      border-radius: 9px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s;
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-open {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+    }
+    .btn-embed {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-open:hover, .btn-embed:hover { opacity: .8; }
+
+    .embed-box {
+      display: none;
+      margin-top: 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: 'Courier New', monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.6;
+    }
+
+    .error-msg {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: rgba(255,79,106,.1);
+      border: 1px solid rgba(255,79,106,.3);
+      border-radius: 9px;
+      color: var(--error);
+      font-size: 0.82rem;
+      display: none;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 28px 0;
+    }
+
+    .tips {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .tips strong { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+    <div class="logo-text">Vid<span>Nest</span></div>
+  </div>
+
+  <h1>Direct Play Link</h1>
+  <p class="subtitle">Paste any HLS or MP4 stream URL and get a shareable link that plays instantly — no server lookup, no scraping.</p>
+
+  <div class="field">
+    <label>Stream URL *</label>
+    <div class="input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+      <input type="url" id="streamUrl" placeholder="https://example.com/stream.m3u8  or  .mp4" autocomplete="off" spellcheck="false">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label>Referer (optional)</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        <input type="text" id="referer" placeholder="https://source-site.com" autocomplete="off">
+      </div>
+    </div>
+    <div class="field">
+      <label>Title (optional)</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 6h16M4 12h10M4 18h6"/>
+        </svg>
+        <input type="text" id="titleInput" placeholder="Movie / Episode name" autocomplete="off">
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-generate" onclick="generate()">
+    <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    Generate Direct Play Link
+  </button>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <!-- Result -->
+  <div class="result-box" id="resultBox">
+    <div class="result-label">Your shareable link</div>
+    <div class="result-link">
+      <a id="resultAnchor" href="#" target="_blank" rel="noopener"></a>
+      <button class="btn-copy" id="copyBtn" onclick="copyLink()">Copy</button>
+    </div>
+    <div class="action-row">
+      <a id="openBtn" class="btn-open" href="#" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Open Player
+      </a>
+      <button class="btn-embed" onclick="toggleEmbed()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+        </svg>
+        Embed Code
+      </button>
+    </div>
+    <div class="embed-box" id="embedBox"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="tips">
+    <strong>Supported formats:</strong> HLS (.m3u8) with automatic quality switching · MP4 · WebM<br>
+    <strong>Tip:</strong> If the stream requires a Referer header (e.g. Vidlink, VixSrc), paste the source site URL in the Referer field.<br>
+    <strong>Share:</strong> The generated link encodes everything inline — no re-fetching, no backend calls.
+  </div>
+</div>
+
+<script>
+  let currentLink = '';
+  let embedVisible = false;
+
+  function generate() {
+    const rawUrl  = document.getElementById('streamUrl').value.trim();
+    const referer = document.getElementById('referer').value.trim();
+    const title   = document.getElementById('titleInput').value.trim();
+    const errorEl = document.getElementById('errorMsg');
+    errorEl.style.display = 'none';
+
+    if (!rawUrl) {
+      showError('Please paste a stream URL first.');
+      return;
+    }
+
+    let parsed;
+    try {
+      parsed = new URL(rawUrl);
+    } catch (_) {
+      showError('That doesn\'t look like a valid URL. Make sure it starts with https://');
+      return;
+    }
+
+    // Build player.html query string
+    const params = new URLSearchParams();
+    params.set('url', rawUrl);
+    if (referer) params.set('ref', referer);
+    if (title)   params.set('label', title);
+
+    // Construct absolute share URL based on current origin
+    const base = window.location.origin + window.location.pathname.replace('play.html', '');
+    const shareUrl = `${base}player.html?${params.toString()}`;
+
+    currentLink = shareUrl;
+
+    // Update UI
+    const anchor = document.getElementById('resultAnchor');
+    anchor.href = shareUrl;
+    anchor.textContent = shareUrl;
+
+    document.getElementById('openBtn').href = shareUrl;
+
+    // Reset embed
+    embedVisible = false;
+    document.getElementById('embedBox').style.display = 'none';
+    document.getElementById('embedBox').textContent = buildEmbed(shareUrl);
+
+    document.getElementById('copyBtn').classList.remove('copied');
+    document.getElementById('copyBtn').textContent = 'Copy';
+
+    document.getElementById('resultBox').style.display = 'block';
+
+    // Auto-scroll to result
+    document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function buildEmbed(src) {
+    return `<iframe\n  src="${src}"\n  width="100%"\n  height="100%"\n  frameborder="0"\n  allowfullscreen\n  allow="autoplay; fullscreen">\n</iframe>`;
+  }
+
+  function copyLink() {
+    if (!currentLink) return;
+    navigator.clipboard.writeText(currentLink).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✓ Copied';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      // Fallback for non-secure contexts
+      const ta = document.createElement('textarea');
+      ta.value = currentLink;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    });
+  }
+
+  function toggleEmbed() {
+    embedVisible = !embedVisible;
+    const box = document.getElementById('embedBox');
+    box.style.display = embedVisible ? 'block' : 'none';
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  // Allow Enter key on inputs to trigger generate
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') generate();
+  });
+</script>
+</body>
+</html>

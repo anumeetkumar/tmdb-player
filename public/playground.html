@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>VidNest – Seamless Movie, TV & Anime Streaming Embeds</title>
+  <meta name="description" content="VidNest is the professional-grade streaming API for effortless movie, TV-show and anime embeds. Lightning-fast player, ad-free experience and fully customisable.">
+  <meta name="keywords" content="VidNest,video streaming API,movie embed,TV embed,anime embed,HLS player,ad-free streaming,video player,streaming platform,HD movies,online anime,dub,sub,m3u8,Vite,React">
+  <link rel="stylesheet" href="playground_style.css">
+</head>
+<body>
+
+  <!-- Sticky Premium Navigation Header -->
+  <header class="site-header">
+    <div class="brand">
+      <div class="brand-logo">V</div>
+      <span class="brand-name">VidNest</span>
+      <span class="api-badge">v2.0 Embeds</span>
+    </div>
+    
+    <nav class="nav-links">
+      <a href="#playground" class="nav-link active">Playground</a>
+      <a href="#showcase" class="nav-link">Showcase</a>
+      <a href="#docs" class="nav-link">API Docs</a>
+      <a href="#features" class="nav-link">Features</a>
+    </nav>
+    
+    <a href="#docs" class="cta-button">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Get API Key
+    </a>
+  </header>
+
+  <main class="container">
+    
+    <!-- Hero Grid: Playground Controls & Player Viewport -->
+    <div class="hero-grid" id="playground">
+      
+      <!-- Left: Interactive Generator Form -->
+      <section class="panel">
+        <h2 class="panel-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+          Embed Generator
+        </h2>
+        
+        <!-- Media Type Select Tabs -->
+        <div class="form-group">
+          <label class="form-label">Media Stream Type</label>
+          <div class="type-selector">
+            <button class="type-tab active" id="tabTv">TV Show</button>
+            <button class="type-tab" id="tabMovie">Movie</button>
+          </div>
+        </div>
+
+        <!-- Custom Inputs Row -->
+        <div class="form-group">
+          <label class="form-label" id="idLabel">TMDB ID & Coordinates</label>
+          <div class="input-row" id="inputsRow">
+            <input type="text" class="form-input" id="tmdbIdInput" value="273240" placeholder="TMDB ID" aria-label="TMDB ID">
+            <input type="number" class="form-input" id="seasonInput" value="1" min="1" placeholder="S" aria-label="Season">
+            <input type="number" class="form-input" id="episodeInput" value="1" min="1" placeholder="E" aria-label="Episode">
+          </div>
+        </div>
+
+
+
+        <!-- Realtime Code Display Box -->
+        <div class="form-group" style="position: relative;">
+          <label class="form-label">Generated Iframe Code</label>
+          <div class="code-box">
+            <div class="code-title">Embedded Iframe HTML</div>
+            <code class="code-content" id="codeSnippet"><span class="tag">&lt;iframe</span> <span class="attr">src</span>=<span class="val">"https://vidnest.fun/embed/tv/273240/1/1?server=prime"</span> <span class="attr">width</span>=<span class="val">"100%"</span> <span class="attr">height</span>=<span class="val">"100%"</span> <span class="attr">frameborder</span>=<span class="val">"0"</span> <span class="attr">allowfullscreen</span><span class="tag">&gt;&lt;/iframe&gt;</span></code>
+            <button class="copy-btn" id="copyCodeBtn" title="Copy Iframe Code" aria-label="Copy Code">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="launchStreamBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"></path>
+          </svg>
+          Launch Embed Stream
+        </button>
+
+      </section>
+
+      <!-- Right: Real Interactive Iframe Viewer Viewport -->
+      <section class="preview-container">
+        <div class="player-card">
+          <!-- Real responsive embed iframe targeting player.html -->
+          <iframe id="previewIframe" class="player-iframe" src="player.html?type=tv&id=273240&s=1&e=1&server=prime&v=2.2" allow="fullscreen"></iframe>
+        </div>
+        
+        <!-- Viewport Metadata Footer -->
+        <div class="player-info-footer">
+          <div class="current-metadata">
+            <div class="meta-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 3H3c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.11-.9-2-2-2zm0 14H3V5h18v12z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="meta-text" id="streamTitleText">The Deal</div>
+              <div class="meta-sub" id="streamCoordinatesText">TV Show • Season 1 • Episode 1</div>
+            </div>
+          </div>
+          <div class="status-badge">
+            <div class="status-dot"></div>
+            <span id="playerStatusText">Live Feed Online</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Trending Showcase Carousel -->
+    <section class="carousel-section" id="showcase">
+      <h2 class="section-title">Trending Embedding Showcases</h2>
+      <p class="section-desc">Click any popular movie or series card below to immediately configure it and watch the HLS feed load inside our live player playground.</p>
+      
+      <div class="carousel-grid">
+        
+        <!-- Card 1: The Deal -->
+        <div class="show-card" data-type="tv" data-id="273240" data-season="1" data-episode="1" data-name="The Deal">
+          <div class="card-backdrop" style="background-image: url('https://image.tmdb.org/t/p/w500/nMl7h2ZYE2nMfQWLgsh09Zaqarj.jpg');">
+            <div class="card-type tv">TV Show</div>
+          </div>
+          <div class="card-info">
+            <div>
+              <h3 class="card-title">The Deal</h3>
+              <p class="card-desc">Two friends plot a fake kidnapping of their classmate to earn quick cash, spiraling out of control.</p>
+            </div>
+            <div class="card-footer">
+              <span class="card-rating">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
+                8.1
+              </span>
+              <span>2023 • S1 E1</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Cyberpunk Edgerunners -->
+        <div class="show-card" data-type="tv" data-id="105248" data-season="1" data-episode="1" data-name="Cyberpunk: Edgerunners">
+          <div class="card-backdrop" style="background-image: url('https://image.tmdb.org/t/p/w500/5i6SjiaZ28rR86i2Xw8iBh4R95Y.jpg');">
+            <div class="card-type tv">TV Show</div>
+          </div>
+          <div class="card-info">
+            <div>
+              <h3 class="card-title">Cyberpunk: Edgerunners</h3>
+              <p class="card-desc">A street kid trying to survive in a futuristic tech-obsessed city turns into an outlaw mercenary.</p>
+            </div>
+            <div class="card-footer">
+              <span class="card-rating">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
+                8.6
+              </span>
+              <span>2022 • S1 E1</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Dune: Part Two -->
+        <div class="show-card" data-type="movie" data-id="693134" data-name="Dune: Part Two">
+          <div class="card-backdrop" style="background-image: url('https://image.tmdb.org/t/p/w500/xOMo8BRK7PqaJ2wDw06JivR8RPB.jpg');">
+            <div class="card-type movie">Movie</div>
+          </div>
+          <div class="card-info">
+            <div>
+              <h3 class="card-title">Dune: Part Two</h3>
+              <p class="card-desc">Paul Atreides unites with Chani and the Fremen while seeking revenge against the Harkonnens.</p>
+            </div>
+            <div class="card-footer">
+              <span class="card-rating">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
+                8.4
+              </span>
+              <span>2024 • Film</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: K.G.F: Chapter 1 -->
+        <div class="show-card" data-type="movie" data-id="564147" data-name="K.G.F: Chapter 1">
+          <div class="card-backdrop" style="background-image: url('https://wsrv.nl/?url=https://image.tmdb.org/t/p/w500/4i1ofsSpfTuswHXcgPtXbZrSnoe.jpg');">
+            <div class="card-type movie">Movie</div>
+          </div>
+          <div class="card-info">
+            <div>
+              <h3 class="card-title">K.G.F: Chapter 1</h3>
+              <p class="card-desc">Rocky, a young man, seeks power and wealth in order to fulfill a promise to his dying mother, leading him to the gold fields.</p>
+            </div>
+            <div class="card-footer">
+              <span class="card-rating">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
+                8.2
+              </span>
+              <span>2018 • Film</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Developer API Documentation Section -->
+    <section class="doc-box" id="docs">
+      <h2 class="section-title">Developer Integration Guide</h2>
+      <p class="section-desc" style="margin-bottom: 1.5rem">VidNest provides an easy, zero-setup HLS streaming embed interface. Integrate it in seconds.</p>
+      
+      <!-- Tab selectors -->
+      <div class="doc-tabs-nav" role="tablist">
+        <button class="doc-tab-trigger active" role="tab" id="docTabIframeBtn">Iframe Embedding</button>
+        <button class="doc-tab-trigger" role="tab" id="docTabJsonBtn">Metadata REST API</button>
+        <button class="doc-tab-trigger" role="tab" id="docTabFailoverBtn">Smart Failovers & Routing</button>
+      </div>
+
+      <!-- Tab content 1: Iframe embed -->
+      <div class="doc-tab-content active" id="docTabIframe">
+        <h3>HTML Iframe Embed API</h3>
+        <p style="color: var(--text-muted); margin: 0.5rem 0 1.5rem; font-size: 0.95rem">
+          To embed movies or episodes seamlessly in your streaming portal, simply load our responsive URL endpoints in an iframe element.
+        </p>
+        
+        <table class="doc-table">
+          <thead>
+            <tr>
+              <th>Routing URL format</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>https://vidnest.fun/embed/movie/{tmdb_id}</code></td>
+              <td>Embeds a movie player matching the specified TMDB movie database identifier.</td>
+            </tr>
+            <tr>
+              <td><code>https://vidnest.fun/embed/tv/{tmdb_id}/{season}/{episode}</code></td>
+              <td>Embeds a specific television episode player with season and episode coordinates.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin: 1.5rem 0 0.5rem">Query String Options</h4>
+        <table class="doc-table">
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Allowed Values</th>
+              <th>Default</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>server</code></td>
+              <td><code>prime</code>, <code>lamda</code>, <code>alfa</code>, <code>delta</code></td>
+              <td><code>prime</code></td>
+              <td>Specifies preferred routing server (Failovers auto-kick on fallback).</td>
+            </tr>
+            <tr>
+              <td><code>autoplay</code></td>
+              <td><code>1</code>, <code>0</code></td>
+              <td><code>0</code></td>
+              <td>Determines whether media automatically plays and prepares feeds on load.</td>
+            </tr>
+            <tr>
+              <td><code>sub</code></td>
+              <td><code>en</code>, <code>es</code>, <code>fr</code>, <code>none</code></td>
+              <td><code>en</code></td>
+              <td>Sets the default preloaded subtitle language on player initialization.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tab content 2: REST JSON API -->
+      <div class="doc-tab-content" id="docTabJson">
+        <h3>REST JSON Stream Resolvers</h3>
+        <p style="color: var(--text-muted); margin: 0.5rem 0 1.5rem; font-size: 0.95rem">
+          For professional platforms building fully custom players, fetch the direct adaptive HLS `.m3u8` feeds using our REST endpoint.
+        </p>
+
+        <div class="code-box" style="margin-bottom: 1.5rem;">
+          <div class="code-title">HTTP Request Method</div>
+          <code class="code-content"><span class="tag">GET</span> <span class="val">https://api.vidnest.fun/v2/stream/resolve?type=tv&id=273240&s=1&e=1&key=YOUR_API_KEY</span></code>
+        </div>
+
+        <div class="code-box">
+          <div class="code-title">JSON Response (Status 200 OK)</div>
+          <code class="code-content">{
+  <span class="attr">"success"</span>: <span class="val">true</span>,
+  <span class="attr">"tmdb_id"</span>: <span class="val">"273240"</span>,
+  <span class="attr">"title"</span>: <span class="val">"The Deal (Season 1 Episode 1)"</span>,
+  <span class="attr">"stream_url"</span>: <span class="val">"https://cdn.vidnest.fun/hls/master.m3u8"</span>,
+  <span class="attr">"servers"</span>: [
+    { <span class="attr">"id"</span>: <span class="val">"prime"</span>, <span class="attr">"ping"</span>: <span class="val">"12ms"</span>, <span class="attr">"active"</span>: <span class="val">true</span> },
+    { <span class="attr">"id"</span>: <span class="val">"lamda"</span>, <span class="attr">"ping"</span>: <span class="val">"18ms"</span>, <span class="attr">"active"</span>: <span class="val">true</span> }
+  ],
+  <span class="attr">"subtitles"</span>: [
+    { <span class="attr">"language"</span>: <span class="val">"English"</span>, <span class="attr">"src"</span>: <span class="val">"https://sub.vidnest.fun/en.vtt"</span> },
+    { <span class="attr">"language"</span>: <span class="val">"Spanish"</span>, <span class="attr">"src"</span>: <span class="val">"https://sub.vidnest.fun/es.vtt"</span> }
+  ]
+}</code>
+        </div>
+      </div>
+
+      <!-- Tab content 3: Failovers and Resilience -->
+      <div class="doc-tab-content" id="docTabFailover">
+        <h3>Smart Failovers & Ad-Block Core</h3>
+        <p style="color: var(--text-muted); margin: 0.5rem 0 1.5rem; font-size: 0.95rem">
+          VidNest is engineered for zero-downtime streaming. Even if our master HLS feeds face network blocks, our engines protect continuity.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--glass-border); padding: 1.25rem; border-radius: var(--radius-md)">
+            <h4 style="color: var(--accent-cyan); margin-bottom: 0.5rem">Resilient Active Routing</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6">
+              Our player checks the selected server stream integrity in real-time. If buffering stalls or a server fails to resolve for over 3 seconds, it silently migrates the client stream to the next fastest responsive CDN pipeline.
+            </p>
+          </div>
+          <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--glass-border); padding: 1.25rem; border-radius: var(--radius-md)">
+            <h4 style="color: var(--accent-purple); margin-bottom: 0.5rem">Zero Pop-up Sandbox Core</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6">
+              Every server integration strips third-party ad tags, redirect triggers, and pop-up loaders. When embedded, our iframe sandbox restricts frame redirects so your users never face malicious ad spam.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Key Features Highlight Matrix -->
+    <section class="features-section" id="features">
+      <h2 class="section-title" style="text-align: center;">Why Choose VidNest Embeds?</h2>
+      <p class="section-desc" style="text-align: center; margin-bottom: 3rem">The ultimate streaming infrastructure for modern aggregators.</p>
+      
+      <div class="features-grid">
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <h3>Lightning-Fast Playback</h3>
+          <p>Instant start times and zero buffer delays powered by high-capacity HLS adaptive bitrates (1080p, 720p, 480p auto-resolution scaling).</p>
+        </div>
+
+        <div class="feature-card purple">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h3>100% Ad-Free & Clean</h3>
+          <p>No pop-ups, redirects, or visual clutter. VidNest blocks pop-under networks at the proxy level to deliver a premium user experience.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <h3>Resilient Failovers</h3>
+          <p>Built-in network monitoring automatically falls back to secondary servers (Lamda, Prime, Delta) if a CDN node experiences outages.</p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Premium Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div>
+        <div class="brand">
+          <div class="brand-logo">V</div>
+          <span class="brand-name">VidNest</span>
+        </div>
+        <p class="footer-brand-desc">The professional-grade streaming engine for instant, ad-free video embedding across movies, shows and anime.</p>
+      </div>
+      
+      <div class="footer-col">
+        <h4>Developer APIs</h4>
+        <ul class="footer-links">
+          <li><a href="#playground">Iframe Playground</a></li>
+          <li><a href="#docs">REST Resolve URL</a></li>
+          <li><a href="#docs">Server Monitoring</a></li>
+          <li><a href="#docs">Failover Rules</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Platform Status</h4>
+        <ul class="footer-links">
+          <li><a href="#playground">Lamda CDN <span style="color: var(--success); font-weight: bold">• Online</span></a></li>
+          <li><a href="#playground">Prime Cluster <span style="color: var(--success); font-weight: bold">• Online</span></a></li>
+          <li><a href="#playground">Delta Fallback <span style="color: var(--success); font-weight: bold">• Online</span></a></li>
+          <li><a href="#playground">Catflix Storage <span style="color: var(--danger); font-weight: bold">• Offline</span></a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>&copy; 2026 VidNest Entertainment Inc. All rights reserved.</span>
+      <span>Designed with pure glassmorphic CSS.</span>
+    </div>
+  </footer>
+
+  <!-- Visual Toasts Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Dynamic app interaction scripts -->
+  <script src="playground.js"></script>
+</body>
+</html>

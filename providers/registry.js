@@ -15,6 +15,7 @@ const providerFunctionMap = {
   'lordflix.js': 'getLordflixStreams',
   'notorrent.js': 'getNotorrentStreams',
   'dahmermovies.js': 'getDahmermoviesStreams',
+  'vidzee.js': 'getVidzeeStreams',
 };
 
 // Stats for debug endpoint
@@ -93,7 +94,7 @@ function createFetchFunction(providerInfo) {
         global.currentRequestConfig = previousConfig || {};
       } else {
         // Standard provider call
-        result = await module[funcName](ctx.tmdbId, mediaType, ctx.season || null, ctx.episode || null);
+        result = await module[funcName](ctx.tmdbId, mediaType, ctx.season || null, ctx.episode || null, ctx.sr || null);
       }
 
       const durationMs = Date.now() - t0;

@@ -1,0 +1,11 @@
+node_modules
+.dockerignore
+Dockerfile
+docker-compose.yml
+screenshots
+scripts
+restart.trigger
+test_*.js
+*.test.js
+.eslintrc.cjs
+.eslintignore

@@ -317,6 +317,34 @@ app.get('/api/providers/:name', (req,res) => {
   res.json({ success:true, provider:{ name: p.name, enabled: p.enabled } });
 });
 
+// Dynamic TMDB Metadata Resolver using rotated API keys
+app.get('/api/metadata/:type/:id', async (req, res) => {
+  const { type, id } = req.params;
+  const tmdbType = type === 'movie' ? 'movie' : 'tv';
+  const axios = require('axios');
+  
+  const keys = config.tmdbApiKeys && config.tmdbApiKeys.length ? config.tmdbApiKeys : [config.tmdbApiKey];
+  const activeKey = keys[Math.floor(Math.random() * keys.length)];
+  
+  if (!activeKey) {
+    return res.json({ success: false, title: `Custom ID: ${id}` });
+  }
+  
+  try {
+    const { data } = await axios.get(`https://api.tmdb.org/3/${tmdbType}/${id}?api_key=${activeKey}`, { timeout: 5000 });
+    res.json({
+      success: true,
+      title: data.title || data.name || `Custom ID: ${id}`,
+      backdrop_path: data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : null,
+      overview: data.overview || '',
+      vote_average: data.vote_average || null,
+      release_date: data.release_date || data.first_air_date || ''
+    });
+  } catch (e) {
+    res.json({ success: false, title: `Custom ID: ${id}` });
+  }
+});
+
 // Aggregate streams across all enabled providers
 app.get('/api/streams/:type/:tmdbId', async (req,res) => {
   const { type, tmdbId } = req.params;
@@ -336,7 +364,7 @@ app.get('/api/streams/:type/:tmdbId', async (req,res) => {
       try {
         console.log(`[api] invoking provider ${name} for tmdbId=${tmdbId}`);
         const t0 = Date.now();
-        const r = await prov.fetch({ tmdbId, type, season, episode, imdbId, filters:{ } });
+        const r = await prov.fetch({ tmdbId, type, season, episode, imdbId, sr: req.query.sr || null, filters:{ } });
         providerTimings[name] = Date.now()-t0;
         console.log(`[api] provider ${name} returned ${Array.isArray(r)?r.length:0} streams`);
         return r;
@@ -377,7 +405,7 @@ app.get('/api/streams/:provider/:type/:tmdbId', async (req,res) => {
     const tmdbType = type === 'movie' ? 'movie' : 'tv';
     const imdbId = await resolveImdbId(tmdbType, tmdbId); if (imdbId) metrics.tmdbToImdbLookups++;
     const t0 = Date.now();
-    let streams = await prov.fetch({ tmdbId, type, season, episode, imdbId, filters:{} });
+    let streams = await prov.fetch({ tmdbId, type, season, episode, imdbId, sr: req.query.sr || null, filters:{} });
     const providerTimings = { [prov.name]: Date.now()-t0 };
     streams = applyFilters(streams, prov.name, config.minQualities, config.excludeCodecs);
     metrics.streamsReturned += streams.length;
@@ -393,22 +421,54 @@ app.get('/api/streams/:provider/:type/:tmdbId', async (req,res) => {
   }
 });
 
-const PORT = config.port;
-const HOST = process.env.BIND_HOST || '0.0.0.0';
-const server = app.listen(PORT, HOST, () => {
-  console.log(`TMDB Embed REST API listening on http://${HOST}:${PORT}`);
-  if (HOST !== 'localhost') {
-    console.log(`Local access (if running on your machine): http://localhost:${PORT}`);
-  }
-  console.log('Endpoints:');
-  console.log('  GET  /api/health');
-  console.log('  GET  /api/metrics');
-  console.log('  GET  /api/providers');
-  console.log('  GET  /api/streams/:type/:id');
-  console.log('  POST /api/streams/:type/:id');
-  if (!config.febboxCookies || config.febboxCookies.length === 0) {
-    console.warn('[startup][warning] No FEBBOX_COOKIES configured. Showbox / PStream related streams may be unavailable. Set FEBBOX_COOKIES in your environment to enable these sources.');
-  }
+// Clean Embed URL Redirects (renders player.html matching query parameters)
+app.get('/embed/movie/:id', (req, res) => {
+  const { id } = req.params;
+  const queryString = new URLSearchParams(req.query).toString();
+  const dest = `/player.html?type=movie&id=${id}${queryString ? '&' + queryString : ''}`;
+  res.redirect(dest);
 });
 
-server.on('error', (err)=>{ console.error('[diagnostic] server error', err); });
+app.get('/embed/tv/:id/:season/:episode', (req, res) => {
+  const { id, season, episode } = req.params;
+  const queryString = new URLSearchParams(req.query).toString();
+  const dest = `/player.html?type=tv&id=${id}&s=${season}&e=${episode}${queryString ? '&' + queryString : ''}`;
+  res.redirect(dest);
+});
+
+// Route to play any custom HLS/MP4 video URL directly using our player
+app.get('/embed/video', (req, res) => {
+  const { url } = req.query;
+  if (!url) {
+    return res.status(400).send("Error: 'url' query parameter is required. Example: /embed/video?url=https://example.com/stream.m3u8");
+  }
+  const queryString = new URLSearchParams(req.query).toString();
+  res.redirect(`/player.html?${queryString}`);
+});
+
+// Only start the HTTP server when running locally (not on Vercel serverless)
+if (!process.env.VERCEL) {
+  const PORT = config.port;
+  const HOST = process.env.BIND_HOST || '0.0.0.0';
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`TMDB Embed REST API listening on http://${HOST}:${PORT}`);
+    if (HOST !== 'localhost') {
+      console.log(`Local access (if running on your machine): http://localhost:${PORT}`);
+    }
+    console.log('Endpoints:');
+    console.log('  GET  /api/health');
+    console.log('  GET  /api/metrics');
+    console.log('  GET  /api/providers');
+    console.log('  GET  /api/streams/:type/:id');
+    console.log('  POST /api/streams/:type/:id');
+    if (!config.febboxCookies || config.febboxCookies.length === 0) {
+      console.warn('[startup][warning] No FEBBOX_COOKIES configured. Showbox / PStream related streams may be unavailable. Set FEBBOX_COOKIES in your environment to enable these sources.');
+    }
+  });
+
+  server.on('error', (err)=>{ console.error('[diagnostic] server error', err); });
+}
+
+// Export for Vercel serverless handler
+module.exports = app;
+
