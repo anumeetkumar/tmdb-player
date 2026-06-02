@@ -143,12 +143,9 @@ app.get('/config.html', (req,res,next) => {
   res.sendFile(path.join(process.cwd(),'public','config.html'));
 });
 
-// Explicit root handler for login page to ensure no-store
+// Root: redirect straight to the player dashboard — no login required
 app.get('/', (req,res) => {
-  res.setHeader('Cache-Control','no-store, must-revalidate');
-  res.setHeader('Pragma','no-cache');
-  res.setHeader('Expires','0');
-  res.sendFile(path.join(process.cwd(),'public','index.html'));
+  res.redirect(302, '/playground.html');
 });
 
 // Diagnostics for unexpected exits
