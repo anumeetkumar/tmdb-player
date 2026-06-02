@@ -911,7 +911,17 @@ a {
   pointer-events: none;
 }
 
-.player-wrapper:hover .custom-controls,
+/* Desktop hover shows controls; on touch only .show-controls (set by JS tap) does */
+@media (hover: hover) {
+  .player-wrapper:hover .custom-controls {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .player-wrapper:hover .custom-controls * {
+    pointer-events: auto;
+  }
+}
+
 .player-wrapper.show-controls .custom-controls {
   opacity: 1;
 }
@@ -1295,23 +1305,6 @@ a {
   .custom-controls {
     padding: 3rem 1rem 1rem;
     background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
-    /* Don't force opacity here — JS handles show/hide via .show-controls */
-    pointer-events: none;
-  }
-
-  .player-wrapper.show-controls .custom-controls,
-  .player-wrapper:not(.show-controls) .custom-controls {
-    /* always renderable, visibility toggled by JS class */
-    pointer-events: none;
-  }
-
-  .player-wrapper.show-controls .custom-controls {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .player-wrapper.show-controls .custom-controls * {
-    pointer-events: auto;
   }
 
   /* Larger control buttons — min 44×44px touch target */
