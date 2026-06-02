@@ -903,14 +903,14 @@ function resetControlsTimer() {
   
   clearTimeout(playerState.controlsTimeout);
   
-  // Hide controls after 3 seconds of inactivity
+  // Hide controls after 5 seconds of inactivity
   playerState.controlsTimeout = setTimeout(() => {
     if (!video.paused) {
       playerWrapper.classList.remove('show-controls');
       document.body.style.cursor = 'none';
       closeAllMenus();
     }
-  }, 3000);
+  }, 5000);
 }
 
 // Sync Center Play Overlay Visually
